@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PropAdmin · Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- ✅ Firebase SDK -->
+  <script type="module">
+    // ============================================================
+    // 🔥 PASTE YOUR FIREBASE CONFIG HERE
+    // Firebase Console → Project Settings → Your Apps → SDK setup
+    // ============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy }
+      from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyB04WJRZovEOOHfKX4E00qE_HMPKtyx9js",
+  authDomain: "syedandwaheeddashboard.firebaseapp.com",
+  projectId: "syedandwaheeddashboard",
+  storageBucket: "syedandwaheeddashboard.firebasestorage.app",
+  messagingSenderId: "452194218675",
+  appId: "1:452194218675:web:e02aa031ba83d1542f76c6"
+};
+    // ============================================================
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ── helpers ──────────────────────────────────────────────────
+    function getStatus(lead) {
+      const d = lead.createdAt?.toDate ? lead.createdAt.toDate() : new Date();
+      const h = (Date.now() - d.getTime()) / 3600000;
+      if (h < 6)  return "New";
+      if (h < 24) return "Hot";
+      if (h < 72) return "Warm";
+      return "Cold";
+    }
+
+    function fmtDate(ts) {
+      if (!ts) return "—";
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+    }
+
+    const STATUS = {
+      New:  { bg:"rgba(52,211,153,0.15)",  text:"#34d399" },
+      Hot:  { bg:"rgba(239,68,68,0.15)",   text:"#ef4444" },
+      Warm: { bg:"rgba(251,146,60,0.15)",  text:"#fb923c" },
+      Cold: { bg:"rgba(96,165,250,0.15)",  text:"#60a5fa" },
+    };
+    const MODE_COLOR = { rent:"#a78bfa", buy:"#4f8ef7", availability:"#34d399" };
+
+    let allLeads = [];
+    let areaChart = null, pieChart = null;
+
+    // ── render functions ─────────────────────────────────────────
+    function renderKPIs(leads) {
+      document.getElementById("kpi-total").textContent   = leads.length;
+      const hot = leads.filter(l => ["Hot","New"].includes(getStatus(l))).length;
+      document.getElementById("kpi-hot").textContent     = hot;
+      const avg = leads.length
+        ? Math.round(leads.reduce((s,l) => s + (Number(l.maxPrice)||0), 0) / leads.length)
+        : 0;
+      document.getElementById("kpi-budget").textContent  = avg ? `PKR ${avg.toLocaleString()}` : "—";
+      document.getElementById("kpi-modes").textContent   = [...new Set(leads.map(l=>l.mode).filter(Boolean))].length;
+    }
+
+    function renderAreaChart(leads) {
+      const counts = {};
+      leads.forEach(l => {
+        const d   = l.createdAt?.toDate ? l.createdAt.toDate() : new Date();
+        const key = d.toLocaleDateString("en-US", { month:"short" });
+        counts[key] = (counts[key]||0) + 1;
+      });
+      const labels = Object.keys(counts).slice(-6);
+      const data   = labels.map(k => counts[k]);
+      const ctx    = document.getElementById("areaChart").getContext("2d");
+      if (areaChart) areaChart.destroy();
+      areaChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Leads",
+            data,
+            borderColor: "#4f8ef7",
+            borderWidth: 2,
+            pointBackgroundColor: "#4f8ef7",
+            fill: true,
+            backgroundColor: (ctx) => {
+              const g = ctx.chart.ctx.createLinearGradient(0,0,0,180);
+              g.addColorStop(0, "rgba(79,142,247,0.3)");
+              g.addColorStop(1, "rgba(79,142,247,0)");
+              return g;
+            },
+            tension: 0.4,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color:"rgba(255,255,255,0.04)" }, ticks: { color:"#4a5568" } },
+            y: { grid: { color:"rgba(255,255,255,0.04)" }, ticks: { color:"#4a5568" } },
+          },
+        },
+      });
+    }
+
+    function renderPieChart(leads) {
+      const counts = { rent:0, buy:0, availability:0 };
+      leads.forEach(l => { if (l.mode && counts[l.mode]!==undefined) counts[l.mode]++; });
+      const ctx = document.getElementById("pieChart").getContext("2d");
+      if (pieChart) pieChart.destroy();
+      pieChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Rent","Buy","Availability"],
+          datasets: [{ data: [counts.rent, counts.buy, counts.availability], backgroundColor: ["#a78bfa","#4f8ef7","#34d399"], borderWidth: 0 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: "65%",
+          plugins: { legend: { position:"bottom", labels: { color:"#94a3b8", font:{ size:11 }, boxWidth:10, padding:12 } } },
+        },
+      });
+    }
+
+    function renderRecentLeads(leads) {
+      const el = document.getElementById("recent-leads");
+      el.innerHTML = leads.slice(0,5).map(lead => {
+        const status     = getStatus(lead);
+        const modeColor  = MODE_COLOR[lead.mode] || "#94a3b8";
+        const initial    = (lead.name||"?")[0].toUpperCase();
+        const props      = (lead.properties||[]).join(", ") || "—";
+        const s          = STATUS[status];
+        return `
+          <div class="lead-row">
+            <div class="lead-left">
+              <div class="avatar" style="background:${modeColor}22;color:${modeColor}">${initial}</div>
+              <div>
+                <div class="lead-name">${lead.name||"Unknown"}</div>
+                <div class="lead-sub">${lead.mode||""} · ${props} · ${lead.email||""}</div>
+              </div>
+            </div>
+            <div class="lead-right">
+              <div class="lead-date">${fmtDate(lead.createdAt)}</div>
+              <div class="badge" style="background:${s.bg};color:${s.text}">${status}</div>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderLeadsTable(leads) {
+      const search = document.getElementById("search-input").value.toLowerCase();
+      const fMode  = document.getElementById("filter-mode").value;
+      const fStat  = document.getElementById("filter-status").value;
+
+      const filtered = leads.filter(l => {
+        const status      = getStatus(l);
+        const matchSearch = [l.name,l.email,l.phone,l.location,...(l.properties||[])].filter(Boolean).join(" ").toLowerCase().includes(search);
+        const matchMode   = fMode === "all" || l.mode === fMode;
+        const matchStatus = fStat === "all" || status === fStat;
+        return matchSearch && matchMode && matchStatus;
+      });
+
+      const tbody = document.getElementById("leads-tbody");
+      tbody.innerHTML = filtered.length === 0
+        ? `<tr><td colspan="7" style="padding:40px;text-align:center;color:#4a5568">No leads match your filters.</td></tr>`
+        : filtered.map((lead, i) => {
+            const status    = getStatus(lead);
+            const modeColor = MODE_COLOR[lead.mode] || "#94a3b8";
+            const s         = STATUS[status];
+            const initial   = (lead.name||"?")[0].toUpperCase();
+            const props     = (lead.properties||[]).join(", ")||"—";
+            return `
+              <tr style="background:${i%2===0?"transparent":"rgba(255,255,255,0.01)"}">
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="avatar sm" style="background:${modeColor}22;color:${modeColor}">${initial}</div>
+                    <span style="color:#e2e8f0;font-weight:500">${lead.name||"—"}</span>
+                  </div>
+                </td>
+                <td>${lead.phone||"—"}</td>
+                <td style="font-size:12px">${lead.email||"—"}</td>
+                <td><span class="badge" style="background:${modeColor}18;color:${modeColor}">${lead.mode||"—"}</span></td>
+                <td style="font-size:12px">${props}</td>
+                <td>${lead.maxPrice ? "PKR "+Number(lead.maxPrice).toLocaleString() : "—"}</td>
+                <td><span class="badge" style="background:${s.bg};color:${s.text}">${status}</span></td>
+              </tr>`;
+          }).join("");
+
+      document.getElementById("leads-count").textContent = `Showing ${filtered.length} of ${leads.length} leads · Live from Firebase`;
+    }
+
+    // ── Firebase listener ────────────────────────────────────────
+    const q = query(collection(db, "interests"), orderBy("createdAt", "desc"));
+    onSnapshot(q,
+      snap => {
+        allLeads = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        document.getElementById("status-dot").style.background   = "#34d399";
+        document.getElementById("status-text").textContent       = `${allLeads.length} leads live`;
+        document.getElementById("live-badge").textContent        = "🔴 Live · Firebase";
+        document.getElementById("live-badge").style.color        = "#34d399";
+        document.getElementById("live-badge").style.borderColor  = "rgba(52,211,153,0.2)";
+        document.getElementById("live-badge").style.background   = "rgba(52,211,153,0.1)";
+        renderKPIs(allLeads);
+        renderAreaChart(allLeads);
+        renderPieChart(allLeads);
+        renderRecentLeads(allLeads);
+        renderLeadsTable(allLeads);
+      },
+      err => {
+        document.getElementById("status-dot").style.background  = "#ef4444";
+        document.getElementById("status-text").textContent      = "Firebase error";
+        document.getElementById("error-banner").style.display   = "block";
+        document.getElementById("error-msg").textContent        = err.message;
+        console.error(err);
+      }
+    );
+
+    // ── event listeners ──────────────────────────────────────────
+    window.addEventListener("DOMContentLoaded", () => {
+      // Nav
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          document.querySelectorAll(".view").forEach(v => v.style.display = "none");
+          document.getElementById("view-" + btn.dataset.view).style.display = "block";
+          if (btn.dataset.view === "leads") renderLeadsTable(allLeads);
+        });
+      });
+
+      // Filters
+      ["search-input","filter-mode","filter-status"].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", () => renderLeadsTable(allLeads));
+        document.getElementById(id)?.addEventListener("change", () => renderLeadsTable(allLeads));
+      });
+
+      document.getElementById("view-all-btn")?.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelector('[data-view="leads"]').classList.add("active");
+        document.querySelectorAll(".view").forEach(v => v.style.display = "none");
+        document.getElementById("view-leads").style.display = "block";
+        renderLeadsTable(allLeads);
+      });
+    });
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { display: flex; min-height: 100vh; font-family: 'DM Sans', sans-serif; background: #0f1117; color: #e2e8f0; }
+
+    /* Sidebar */
+    #sidebar { width: 240px; background: #090c14; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 32px 0; flex-shrink: 0; }
+    .logo { padding: 0 24px 40px; }
+    .logo h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #fff; }
+    .logo p  { font-size: 11px; color: #4a5568; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.08em; }
+    nav { flex: 1; }
+    .nav-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 24px; border: none; background: transparent; color: #94a3b8; font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; text-align: left; border-left: 3px solid transparent; transition: all 0.15s; margin-bottom: 2px; }
+    .nav-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+    .nav-btn.active { color: #4f8ef7; background: rgba(79,142,247,0.12); border-left-color: #4f8ef7; font-weight: 600; }
+    .nav-btn.danger { color: #ef4444; }
+    .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 8px; }
+    #status-dot  { width: 8px; height: 8px; border-radius: 50%; background: #fb923c; flex-shrink: 0; }
+    #status-text { font-size: 11px; color: #4a5568; }
+
+    /* Main */
+    #main { flex: 1; overflow-y: auto; padding: 36px 40px; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; }
+    .page-header h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: #fff; }
+    .page-header p  { font-size: 13px; color: #4a5568; margin-top: 6px; }
+    #live-badge { background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.2); border-radius: 10px; padding: 8px 16px; font-size: 12px; color: #fb923c; font-weight: 500; white-space: nowrap; }
+
+    /* Error banner */
+    #error-banner { display: none; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; font-size: 13px; color: #fca5a5; line-height: 1.7; }
+    #error-banner span { color: #94a3b8; }
+
+    /* Views */
+    .view { display: none; }
+    #view-dashboard { display: block; }
+
+    /* KPI cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+    .kpi-card { background: #141720; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 20px 22px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .kpi-label { font-size: 11px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .kpi-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 700; color: #fff; line-height: 1; }
+    .kpi-delta { font-size: 11px; margin-top: 6px; }
+    .kpi-icon  { font-size: 24px; opacity: 0.6; }
+
+    /* Charts */
+    .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 28px; }
+    .card { background: #141720; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 22px 24px; }
+    .card-title { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+    .card-sub   { font-size: 11px; color: #4a5568; margin-bottom: 20px; }
+    .chart-wrap { position: relative; height: 180px; }
+    .chart-wrap-sm { position: relative; height: 160px; }
+
+    /* Recent leads */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .view-all-btn { background: none; border: 1px solid rgba(79,142,247,0.3); color: #4f8ef7; font-size: 11px; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .lead-row  { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .lead-left { display: flex; align-items: center; gap: 12px; }
+    .lead-right{ display: flex; align-items: center; gap: 10px; }
+    .lead-name { font-size: 13px; font-weight: 500; color: #e2e8f0; }
+    .lead-sub  { font-size: 11px; color: #4a5568; margin-top: 2px; }
+    .lead-date { font-size: 11px; color: #4a5568; }
+    .avatar    { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .avatar.sm { width: 30px; height: 30px; font-size: 12px; }
+    .badge     { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+
+    /* Leads table */
+    .filters   { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-input { flex: 1; min-width: 220px; background: #141720; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 16px; color: #e2e8f0; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
+    .filter-select { background: #141720; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 16px; color: #94a3b8; font-size: 12px; font-family: 'DM Sans', sans-serif; outline: none; cursor: pointer; }
+    table  { width: 100%; border-collapse: collapse; }
+    thead  { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    thead th { padding: 12px 16px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #4a5568; font-weight: 600; text-align: left; }
+    tbody td { padding: 14px 16px; font-size: 13px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    #leads-count { margin-top: 12px; font-size: 12px; color: #4a5568; }
+
+    /* Properties placeholder */
+    .placeholder { text-align: center; padding: 60px; color: #4a5568; }
+    .placeholder .icon { font-size: 48px; margin-bottom: 16px; }
+    .placeholder h3 { font-size: 18px; color: #94a3b8; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sidebar ── -->
+  <div id="sidebar">
+    <div class="logo">
+      <h1>🏠 PropAdmin</h1>
+      <p>Real Estate CRM</p>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-view="dashboard">⊡ &nbsp; Dashboard</button>
+      <button class="nav-btn"        data-view="leads">👥 &nbsp; Interests</button>
+      <button class="nav-btn"        data-view="properties">🏘 &nbsp; Properties</button>
+      <button class="nav-btn danger" data-view="dashboard">↩ &nbsp; Logout</button>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="status-dot"></div>
+      <div id="status-text">Connecting…</div>
+    </div>
+  </div>
+
+  <!-- ── Main ── -->
+  <div id="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h2>Dashboard Overview</h2>
+        <p>Live data from Firebase · interests collection</p>
+      </div>
+      <div id="live-badge">⏳ Connecting…</div>
+    </div>
+
+    <!-- Error banner -->
+    <div id="error-banner">
+      <strong>⚠️ Firebase connection error: <span id="error-msg"></span></strong><br/>
+      <span>Go to <strong>Firebase Console → Project Settings → Your Apps</strong>, copy your config, and paste it into the <code>firebaseConfig</code> block at the top of this file.</span>
+    </div>
+
+    <!-- ── Dashboard View ── -->
+    <div id="view-dashboard" class="view">
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div><div class="kpi-label">Total Leads</div><div class="kpi-value" id="kpi-total">…</div><div class="kpi-delta" style="color:#4f8ef7">interests collection</div></div>
+          <div class="kpi-icon">👥</div>
+        </div>
+        <div class="kpi-card">
+          <div><div class="kpi-label">Hot &amp; New</div><div class="kpi-value" id="kpi-hot">…</div><div class="kpi-delta" style="color:#ef4444">need attention now</div></div>
+          <div class="kpi-icon">🔥</div>
+        </div>
+        <div class="kpi-card">
+          <div><div class="kpi-label">Avg Max Budget</div><div class="kpi-value" id="kpi-budget" style="font-size:20px;padding-top:6px">…</div><div class="kpi-delta" style="color:#34d399">across all leads</div></div>
+          <div class="kpi-icon">💰</div>
+        </div>
+        <div class="kpi-card">
+          <div><div class="kpi-label">Intent Modes</div><div class="kpi-value" id="kpi-modes">…</div><div class="kpi-delta" style="color:#a78bfa">rent / buy / availability</div></div>
+          <div class="kpi-icon">📊</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="card">
+          <div class="card-title">Lead Volume Over Time</div>
+          <div class="card-sub">New leads per month from Firebase</div>
+          <div class="chart-wrap"><canvas id="areaChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Intent Breakdown</div>
+          <div class="card-sub">Rent vs Buy vs Availability</div>
+          <div class="chart-wrap-sm"><canvas id="pieChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Recent leads -->
+      <div class="card">
+        <div class="section-header">
+          <div class="card-title">Recent Leads</div>
+          <button class="view-all-btn" id="view-all-btn">View All →</button>
+        </div>
+        <div id="recent-leads"><div style="color:#4a5568;font-size:13px;padding:20px 0">Loading from Firebase…</div></div>
+      </div>
+    </div>
+
+    <!-- ── Interests / Leads View ── -->
+    <div id="view-leads" class="view">
+      <div class="filters">
+        <input id="search-input" class="filter-input" placeholder="🔍  Search name, email, location…" />
+        <select id="filter-mode" class="filter-select">
+          <option value="all">All Modes</option>
+          <option value="rent">Rent</option>
+          <option value="buy">Buy</option>
+          <option value="availability">Availability</option>
+        </select>
+        <select id="filter-status" class="filter-select">
+          <option value="all">All Status</option>
+          <option value="New">New</option>
+          <option value="Hot">Hot</option>
+          <option value="Warm">Warm</option>
+          <option value="Cold">Cold</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Phone</th><th>Email</th><th>Mode</th><th>Properties</th><th>Max Budget</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="leads-tbody">
+            <tr><td colspan="7" style="padding:40px;text-align:center;color:#4a5568">Loading from Firebase…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="leads-count"></div>
+    </div>
+
+    <!-- ── Properties View ── -->
+    <div id="view-properties" class="view">
+      <div class="card placeholder">
+        <div class="icon">🏘</div>
+        <h3>Properties</h3>
+        <p>Coming next — will connect to your Firebase <code>properties</code> collection.</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
