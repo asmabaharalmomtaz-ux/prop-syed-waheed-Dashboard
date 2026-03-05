@@ -57,7 +57,8 @@ onSnapshot(qLeads,
   }
 );
 
-onSnapshot(collection(db, "properties"), snap => {
+const qProps = query(collection(db, "MainPropertyForm"), orderBy("createdAt", "desc"));
+onSnapshot(qProps, snap => {
   allProperties = snap.docs.map(d => ({ id:d.id, ...d.data() }));
   renderKPIs();
   renderPropertiesTable(allProperties);
@@ -87,4 +88,7 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById(id)?.addEventListener("input",  () => renderLeadsTable(allLeads));
     document.getElementById(id)?.addEventListener("change", () => renderLeadsTable(allLeads));
   });
+
+  // Filter on properties page
+  document.getElementById("props-search")?.addEventListener("input", () => renderPropertiesTable(allProperties));
 });
