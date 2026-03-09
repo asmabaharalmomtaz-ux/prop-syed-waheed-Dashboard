@@ -72,7 +72,7 @@ function startApp() {
   });
 
   // Members
-  const qMembers = query(collection(db, "Members"), orderBy("createdAt", "desc"));
+  const qMembers = query(collection(db, "members"), orderBy("createdAt", "desc"));
   onSnapshot(qMembers, snap => {
     allMembers = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     renderKPIs();
