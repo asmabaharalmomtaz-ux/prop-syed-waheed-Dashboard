@@ -7,6 +7,12 @@ import { renderRentTable }                  from "./rent-interests.js";
 import { renderOffplanTable }              from "./offplan-interests.js";
 import { renderRegistrationsTable }         from "./registrations.js";
 import { renderMemberLookup }              from "./member-lookup.js";
+import { renderGlobalSearch }              from "./global-search.js";
+import { initAuth }                         from "./auth.js";
+import { renderRentTable }                  from "./rent-interests.js";
+import { renderOffplanTable }              from "./offplan-interests.js";
+import { renderRegistrationsTable }         from "./registrations.js";
+import { renderMemberLookup }              from "./member-lookup.js";
 import { initAuth }                         from "./auth.js";
 import { collection, onSnapshot, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -19,7 +25,7 @@ let allRent          = [];
 let allOffplan       = [];
 let allRegistrations = [];
 
-
+// ── KPIs ─────────────────────────────────────────────────────
 function renderKPIs() {
   const totalInterests = allSell.length + allBuy.length + allRent.length + allOffplan.length;
   document.getElementById("kpi-total").textContent    = totalInterests;
@@ -29,7 +35,7 @@ function renderKPIs() {
   const kpiBudget = document.getElementById("kpi-budget");
   if (kpiBudget) kpiBudget.textContent = allRegistrations.length;
 
-  
+  // Overview breakdown cards
   const o = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   o("overview-sell",    allSell.length);
   o("overview-buy",     allBuy.length);
@@ -40,7 +46,7 @@ function renderKPIs() {
   o("overview-regs",    allRegistrations.length);
 }
 
-
+// ── Lookup data helper ────────────────────────────────────────
 function getLookupData() {
   return {
     members:          allMembers,
@@ -52,7 +58,19 @@ function getLookupData() {
   };
 }
 
+function getSearchData() {
+  return {
+    sellInterests:  allSell,
+    buyInterests:   allBuy,
+    rentInterests:  allRent,
+    offplanInterests: allOffplan,
+    properties:     allProperties,
+    members:        allMembers,
+    registrations:  allRegistrations,
+  };
+}
 
+// ── Nav ───────────────────────────────────────────────────────
 function setView(viewName) {
   document.querySelectorAll(".view").forEach(v => v.style.display = "none");
   const el = document.getElementById("view-" + viewName);
@@ -65,12 +83,13 @@ function setView(viewName) {
   if (viewName === "offplan")       renderOffplanTable(allOffplan);
   if (viewName === "registrations") renderRegistrationsTable(allRegistrations);
   if (viewName === "lookup")        renderMemberLookup(getLookupData());
+  if (viewName === "global-search") renderGlobalSearch(getSearchData());
 }
 
-
+// ── Firebase listeners ────────────────────────────────────────
 function startApp() {
 
-  
+  // Sell interests — also drives the live badge
   const qSell = query(collection(db, "sell-interests"), orderBy("createdAt", "desc"));
   onSnapshot(qSell, snap => {
     allSell = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -90,7 +109,7 @@ function startApp() {
     console.error("sell-interests error:", err);
   });
 
-
+  // Buy interests
   const qBuy = query(collection(db, "buy-interests"), orderBy("createdAt", "desc"));
   onSnapshot(qBuy, snap => {
     allBuy = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -148,7 +167,7 @@ function startApp() {
     });
   });
 
-  
+  // Filters
   document.getElementById("props-search")?.addEventListener("input",   () => renderPropertiesTable(allProperties));
   document.getElementById("members-search")?.addEventListener("input", () => renderMembersTable(allMembers));
   document.getElementById("sell-search")?.addEventListener("input",    () => renderSellTable(allSell));
@@ -157,10 +176,13 @@ function startApp() {
   document.getElementById("offplan-search")?.addEventListener("input", () => renderOffplanTable(allOffplan));
   document.getElementById("regs-search")?.addEventListener("input",    () => renderRegistrationsTable(allRegistrations));
   document.getElementById("lookup-search")?.addEventListener("input",  () => renderMemberLookup(getLookupData()));
+  document.getElementById("global-search-input")?.addEventListener("input", () => renderGlobalSearch(getSearchData()));
 
-} 
+} // end startApp
 
-
+// ── Boot ─────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   initAuth(startApp);
 });
+// Note: add this import at top of app.js:
+// import { renderGlobalSearch } from "./global-search.js";

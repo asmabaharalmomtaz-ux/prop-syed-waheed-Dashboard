@@ -11,7 +11,7 @@
 </head>
 <body>
 
-
+  <!-- AUTH SCREEN -->
   <div id="auth-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f1117;padding:24px">
     <div style="background:#141720;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:48px 40px;width:100%;max-width:420px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4)">
       <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:8px">🏠 PropAdmin</div>
@@ -34,6 +34,7 @@
     </div>
   </div>
 
+  <!-- APP SCREEN -->
   <div id="app-screen" style="display:none;min-height:100vh">
 
     <!-- Sidebar -->
@@ -55,6 +56,7 @@
         <button class="nav-btn" data-view="members">🪪 &nbsp; Members</button>
         <button class="nav-btn" data-view="registrations">📋 &nbsp; Registrations</button>
         <button class="nav-btn" data-view="lookup">🔍 &nbsp; Member Lookup</button>
+        <button class="nav-btn" data-view="global-search">🌐 &nbsp; Global Search</button>
 
         <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#2d3748;font-weight:600">Property</div>
         <button class="nav-btn" data-view="properties">🏘 &nbsp; Properties</button>
@@ -284,7 +286,25 @@
       </div>
 
       <!-- Properties -->
-      <div id="view-properties" class="view">
+      <!-- Global Search -->
+      <div id="view-global-search" class="view">
+        <div style="margin-bottom:20px">
+          <div style="font-size:22px;font-weight:700;color:#e2e8f0;margin-bottom:6px">🌐 Global Search</div>
+          <div style="font-size:13px;color:#4a5568">Search by building name, area, city, name, email — across every collection</div>
+        </div>
+        <div style="position:relative;margin-bottom:8px">
+          <input
+            id="global-search-input"
+            class="filter-input"
+            placeholder="🔍  Type a building name, area, or any keyword..."
+            style="width:100%;max-width:640px;font-size:15px;padding:14px 18px;height:auto"
+          />
+        </div>
+        <div id="global-search-count" style="font-size:12px;color:#4a5568;margin-bottom:16px;min-height:20px"></div>
+        <div id="global-search-results"></div>
+      </div>
+
+      <!-- Properties view -->
         <div class="filters">
           <input id="props-search" class="filter-input" placeholder="🔍  Search building, area, city, ref no…"/>
         </div>
