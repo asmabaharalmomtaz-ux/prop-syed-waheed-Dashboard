@@ -11,8 +11,7 @@ import { firebaseConfig } from "./firebase.js";
 
 const ALLOWED_EMAILS = [
   "asmabaharalmomtaz@gmail.com",
-  "",
-  "teammate2@gmail.com",
+  "teammate2@gmail.com"
 ];
 
 
