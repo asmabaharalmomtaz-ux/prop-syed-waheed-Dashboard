@@ -165,16 +165,7 @@ function startApp() {
   });
 
   // Filters
-  document.getElementById("props-search")?.addEventListener("input",   () => renderPropertiesTable(allProperties));
-  document.getElementById("members-search")?.addEventListener("input", () => renderMembersTable(allMembers));
-  document.getElementById("sell-search")?.addEventListener("input",    () => renderSellTable(allSell));
-  document.getElementById("buy-search")?.addEventListener("input",     () => renderBuyTable(allBuy));
-  document.getElementById("rent-search")?.addEventListener("input",    () => renderRentTable(allRent));
-  document.getElementById("offplan-search")?.addEventListener("input", () => renderOffplanTable(allOffplan));
-  document.getElementById("regs-search")?.addEventListener("input",    () => renderRegistrationsTable(allRegistrations));
-  document.getElementById("lookup-search")?.addEventListener("input",  () => renderMemberLookup(getLookupData()));
-  document.getElementById("global-search-input")?.addEventListener("input", () => renderGlobalSearch(getSearchData()));
-
+  
 } // end startApp
 
 // ── Boot ─────────────────────────────────────────────────────
