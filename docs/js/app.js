@@ -9,9 +9,7 @@ import { renderRegistrationsTable }         from "./registrations.js";
 import { renderMemberLookup }              from "./member-lookup.js";
 import { renderGlobalSearch }              from "./global-search.js";
 import { initAuth }                         from "./auth.js";
-import { renderOffplanTable }              from "./offplan-interests.js";
-import { renderRegistrationsTable }         from "./registrations.js";
-import { renderMemberLookup }              from "./member-lookup.js";
+
 
 import { collection, onSnapshot, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
