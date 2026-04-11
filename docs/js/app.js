@@ -9,7 +9,6 @@ import { renderRegistrationsTable }         from "./registrations.js";
 import { renderMemberLookup }              from "./member-lookup.js";
 import { renderGlobalSearch }              from "./global-search.js";
 import { initAuth }                         from "./auth.js";
-import { renderRentTable }                  from "./rent-interests.js";
 import { renderOffplanTable }              from "./offplan-interests.js";
 import { renderRegistrationsTable }         from "./registrations.js";
 import { renderMemberLookup }              from "./member-lookup.js";
