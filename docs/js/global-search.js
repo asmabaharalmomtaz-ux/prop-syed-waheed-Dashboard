@@ -3,11 +3,9 @@ import { fmtDate } from "./utils.js";
 // ── Global Search ─────────────────────────────────────────────
 // Searches across all collections for building name or area name
 
-export function renderGlobalSearch({
-  sellInterests,
-  buyInterests,
-  rentInterests,
-  offplanInterests,
+export function renderGlobalSearch({  
+  BuyInterests,
+  SellInterests,
   properties,
   members,
   registrations,
@@ -36,10 +34,8 @@ export function renderGlobalSearch({
 
   // ── Tag each result with its source ──────────────────────────
   const allResults = [
-    ...sellInterests.filter(matchesQuery).map(d    => ({ ...d, _collection: "Sell Interest",     _color: "#f59e0b" })),
-    ...buyInterests.filter(matchesQuery).map(d     => ({ ...d, _collection: "Buy Interest",      _color: "#34d399" })),
-    ...rentInterests.filter(matchesQuery).map(d    => ({ ...d, _collection: "Rent Interest",     _color: "#a78bfa" })),
-    ...offplanInterests.filter(matchesQuery).map(d => ({ ...d, _collection: "Off-Plan Interest", _color: "#fbbf24" })),
+    ...sellInterests.filter(matchesQuery).map(d    => ({ ...d, _collection: "Sell-Form",     _color: "#f59e0b" })),
+    ...buyInterests.filter(matchesQuery).map(d     => ({ ...d, _collection: "Buy-Form",      _color: "#34d399" })),
     ...properties.filter(matchesQuery).map(d       => ({ ...d, _collection: "Property Form",     _color: "#4f8ef7" })),
     ...members.filter(matchesQuery).map(d          => ({ ...d, _collection: "Member",            _color: "#34d399" })),
     ...registrations.filter(matchesQuery).map(d    => ({ ...d, _collection: "Registration",      _color: "#94a3b8" })),

@@ -109,10 +109,9 @@ export function renderMemberLookup({ members, registrations, sellInterests, buyI
 
     const formTags = Object.entries(formCounts).map(([form, count]) => {
       const colors = {
-        "Sell Interest":      { bg: "rgba(245,158,11,0.15)",  text: "#f59e0b"  },
-        "Buy Interest":       { bg: "rgba(52,211,153,0.15)",  text: "#34d399"  },
-        "Rent Interest":      { bg: "rgba(167,139,250,0.15)", text: "#a78bfa"  },
-        "Off-Plan Interest":  { bg: "rgba(251,191,36,0.15)",  text: "#fbbf24"  },
+        "Sell-Form":      { bg: "rgba(245,158,11,0.15)",  text: "#f59e0b"  },
+        "Buy-Form":       { bg: "rgba(52,211,153,0.15)",  text: "#34d399"  },
+     
         "Registration":       { bg: "rgba(79,142,247,0.15)",  text: "#4f8ef7"  },
       };
       const c = colors[form] || { bg: "rgba(148,163,184,0.15)", text: "#94a3b8" };
