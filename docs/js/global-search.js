@@ -4,8 +4,8 @@ import { fmtDate } from "./utils.js";
 // Searches across all collections for building name or area name
 
 export function renderGlobalSearch({  
-  BuyInterests,
-  SellInterests,
+  buyInterests,
+  sellInterests,
   properties,
   members,
   registrations,
