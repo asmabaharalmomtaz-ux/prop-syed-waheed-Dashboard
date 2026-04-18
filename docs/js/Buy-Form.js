@@ -37,15 +37,7 @@ export function renderBuyTable(docs) {
       <td style="width:32px;text-align:center">
         <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(79,142,247,0.15);color:#4f8ef7;font-size:11px;font-weight:700;transition:transform 0.2s;transform:${isExp?"rotate(90deg)":"rotate(0deg)"}">▶</span>
       </td>
-      <td style="width:32px;text-align:center">
-        <span style="
-          display:inline-flex;align-items:center;justify-content:center;
-          width:20px;height:20px;border-radius:50%;
-          background:rgb(219, 177, 37);color:#4f8ef7;
-          font-size:11px;font-weight:700;transition:transform 0.2s;
-          transform:${isExpanded ? "rotate(90deg)" : "rotate(0deg)"}
-        ">▶</span>
-      </td>
+      
       <td>
         ${isMember ? `<span style="font-size:10px;background:rgba(52,211,153,0.15);color:#34d399;padding:2px 6px;border-radius:4px;margin-right:6px">MEMBER</span>` : `<span style="font-size:10px;background:rgba(148,163,184,0.15);color:#94a3b8;padding:2px 6px;border-radius:4px;margin-right:6px">GUEST</span>`}
         <span style="color:#e2e8f0;font-weight:500">${d.memberName || "—"}</span>
@@ -62,6 +54,15 @@ export function renderBuyTable(docs) {
     const det = document.createElement("tr");
     det.style.display = isExp ? "table-row" : "none";
     det.innerHTML = `<td colspan="8" style="padding:0">
+    <td style="width:32px;text-align:center">
+        <span style="
+          display:inline-flex;align-items:center;justify-content:center;
+          width:20px;height:20px;border-radius:50%;
+          background:rgb(219, 177, 37);color:#4f8ef7;
+          font-size:11px;font-weight:700;transition:transform 0.2s;
+          transform:${isExpanded ? "rotate(90deg)" : "rotate(0deg)"}
+        ">▶</span>
+      </td>
       <div style="background:rgba(15,17,23,0.6);border-left:3px solid #34d399;padding:20px 28px">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px">
           <div>
