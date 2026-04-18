@@ -34,8 +34,15 @@ export function renderBuyTable(docs) {
     tr.onmouseover = () => tr.style.background = "rgba(255,255,255,0.03)";
     tr.onmouseout  = () => tr.style.background = "";
     tr.innerHTML = `
+      
       <td style="width:32px;text-align:center">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(79,142,247,0.15);color:#4f8ef7;font-size:11px;font-weight:700;transition:transform 0.2s;transform:${isExp?"rotate(90deg)":"rotate(0deg)"}">▶</span>
+        <span style="
+          display:inline-flex;align-items:center;justify-content:center;
+          width:20px;height:20px;border-radius:50%;
+          background:rgba(79,142,247,0.15);color:#4f8ef7;
+          font-size:11px;font-weight:700;transition:transform 0.2s;
+          transform:${isExpanded ? "rotate(90deg)" : "rotate(0deg)"}
+        ">▶</span>
       </td>
       <td>
         ${isMember ? `<span style="font-size:10px;background:rgba(52,211,153,0.15);color:#34d399;padding:2px 6px;border-radius:4px;margin-right:6px">MEMBER</span>` : `<span style="font-size:10px;background:rgba(148,163,184,0.15);color:#94a3b8;padding:2px 6px;border-radius:4px;margin-right:6px">GUEST</span>`}
