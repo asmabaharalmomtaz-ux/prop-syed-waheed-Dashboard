@@ -1,69 +1,53 @@
-import { db }                               from "./firebase.js";
-import { renderPropertiesTable }            from "./properties.js";
-import { renderMembersTable }               from "./members.js";
-import { renderSellTable }                  from "./sell-interests.js";
-import { renderBuyTable }                   from "./buy-interests.js";
-import { renderRentTable }                  from "./rent-interests.js";
-import { renderOffplanTable }              from "./offplan-interests.js";
-import { renderRegistrationsTable }         from "./registrations.js";
-import { renderMemberLookup }              from "./member-lookup.js";
-import { renderGlobalSearch }              from "./global-search.js";
-import { initAuth }                         from "./auth.js";
-
-
+import { db }                          from "./firebase.js";
+import { renderPropertiesTable }       from "./properties.js";
+import { renderMembersTable }          from "./members.js";
+import { renderRegistrationsTable }    from "./registrations.js";
+import { renderMemberLookup }          from "./member-lookup.js";
+import { renderGlobalSearch }          from "./global-search.js";
+import { initAuth }                    from "./auth.js";
 import { collection, onSnapshot, query, orderBy }
   from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// ── State ─────────────────────────────────────────────────────
 let allProperties    = [];
 let allMembers       = [];
-let allSell          = [];
-let allBuy           = [];
-let allRent          = [];
-let allOffplan       = [];
 let allRegistrations = [];
+let allBuyForm       = [];
+let allSellForm      = [];
 
-// ── KPIs ─────────────────────────────────────────────────────
+// ── KPIs ──────────────────────────────────────────────────────
 function renderKPIs() {
-  const totalInterests = allSell.length + allBuy.length + allRent.length + allOffplan.length;
-  document.getElementById("kpi-total").textContent    = totalInterests;
-  document.getElementById("kpi-hot").textContent      = allSell.length + allBuy.length;
-  document.getElementById("kpi-props").textContent    = allProperties.length;
-  document.getElementById("kpi-members").textContent  = allMembers.length;
-  const kpiBudget = document.getElementById("kpi-budget");
-  if (kpiBudget) kpiBudget.textContent = allRegistrations.length;
-
-  // Overview breakdown cards
-  const o = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  o("overview-sell",    allSell.length);
-  o("overview-buy",     allBuy.length);
-  o("overview-rent",    allRent.length);
-  o("overview-offplan", allOffplan.length);
-  o("overview-members", allMembers.length);
-  o("overview-props",   allProperties.length);
-  o("overview-regs",    allRegistrations.length);
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set("kpi-total",   allBuyForm.length + allSellForm.length);
+  set("kpi-hot",     allBuyForm.length);
+  set("kpi-props",   allProperties.length);
+  set("kpi-members", allMembers.length);
+  set("kpi-budget",  allRegistrations.length);
+  // Overview cards
+  set("overview-buy",     allBuyForm.length);
+  set("overview-sell",    allSellForm.length);
+  set("overview-members", allMembers.length);
+  set("overview-props",   allProperties.length);
+  set("overview-regs",    allRegistrations.length);
 }
 
-// ── Lookup data helper ────────────────────────────────────────
+// ── Data helpers ──────────────────────────────────────────────
 function getLookupData() {
   return {
-    members:          allMembers,
-    registrations:    allRegistrations,
-    sellInterests:    allSell,
-    buyInterests:     allBuy,
-    rentInterests:    allRent,
-    offplanInterests: allOffplan,
+    members:       allMembers,
+    registrations: allRegistrations,
+    buyInterests:  allBuyForm,
+    sellInterests: allSellForm,
   };
 }
 
 function getSearchData() {
   return {
-    sellInterests:  allSell,
-    buyInterests:   allBuy,
-    rentInterests:  allRent,
-    offplanInterests: allOffplan,
-    properties:     allProperties,
-    members:        allMembers,
-    registrations:  allRegistrations,
+    buyInterests:  allBuyForm,
+    sellInterests: allSellForm,
+    properties:    allProperties,
+    members:       allMembers,
+    registrations: allRegistrations,
   };
 }
 
@@ -72,24 +56,77 @@ function setView(viewName) {
   document.querySelectorAll(".view").forEach(v => v.style.display = "none");
   const el = document.getElementById("view-" + viewName);
   if (el) el.style.display = "block";
+  if (viewName === "buy")           renderBuyFormTable(allBuyForm);
+  if (viewName === "sell")          renderSellFormTable(allSellForm);
   if (viewName === "properties")    renderPropertiesTable(allProperties);
   if (viewName === "members")       renderMembersTable(allMembers);
-  if (viewName === "sell")          renderSellTable(allSell);
-  if (viewName === "buy")           renderBuyTable(allBuy);
-  if (viewName === "rent")          renderRentTable(allRent);
-  if (viewName === "offplan")       renderOffplanTable(allOffplan);
   if (viewName === "registrations") renderRegistrationsTable(allRegistrations);
   if (viewName === "lookup")        renderMemberLookup(getLookupData());
   if (viewName === "global-search") renderGlobalSearch(getSearchData());
 }
 
+// ── Simple table renderers for Buy-Form and Sell-Form ─────────
+function renderBuyFormTable(items) {
+  const search = (document.getElementById("buy-search")?.value || "").toLowerCase();
+  const filtered = items.filter(m => !search || JSON.stringify(m).toLowerCase().includes(search));
+  const container = document.getElementById("buy-container");
+  if (!container) return;
+  if (!filtered.length) {
+    container.innerHTML = `<div style="padding:40px;text-align:center;color:#4a5568">${search ? "No results." : "No Buy Form submissions yet."}</div>`;
+    const c = document.getElementById("buy-count"); if (c) c.textContent = "";
+    return;
+  }
+  container.innerHTML = renderFormTable(filtered, "buy");
+  const c = document.getElementById("buy-count"); if (c) c.textContent = `${filtered.length} submission${filtered.length !== 1 ? "s" : ""}`;
+}
+
+function renderSellFormTable(items) {
+  const search = (document.getElementById("sell-search")?.value || "").toLowerCase();
+  const filtered = items.filter(m => !search || JSON.stringify(m).toLowerCase().includes(search));
+  const container = document.getElementById("sell-container");
+  if (!container) return;
+  if (!filtered.length) {
+    container.innerHTML = `<div style="padding:40px;text-align:center;color:#4a5568">${search ? "No results." : "No Sell Form submissions yet."}</div>`;
+    const c = document.getElementById("sell-count"); if (c) c.textContent = "";
+    return;
+  }
+  container.innerHTML = renderFormTable(filtered, "sell");
+  const c = document.getElementById("sell-count"); if (c) c.textContent = `${filtered.length} submission${filtered.length !== 1 ? "s" : ""}`;
+}
+
+function renderFormTable(items, type) {
+  const color = type === "buy" ? "#34d399" : "#f59e0b";
+  const rows = items.map((m, i) => {
+    const isMember = m.submittedAsMember;
+    const date     = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleDateString("en-GB") : "—";
+    return `<tr style="cursor:default">
+      <td><span style="font-size:11px;background:${color}22;color:${color};padding:2px 8px;border-radius:6px;font-weight:600">${type.toUpperCase()}</span></td>
+      <td style="font-weight:500;color:#e2e8f0">${m.name || "—"}</td>
+      <td style="color:#94a3b8;font-size:13px">${m.phone || "—"}</td>
+      <td style="color:#94a3b8;font-size:13px">${m.location || "—"}</td>
+      <td style="color:#94a3b8;font-size:13px">${m.building || "—"}</td>
+      <td style="color:#94a3b8;font-size:13px">${m.category || "—"}</td>
+      <td style="color:#94a3b8;font-size:13px">${m.propertyStatus || m.chosenOption || "—"}</td>
+      <td>${isMember ? `<span style="font-size:10px;background:rgba(52,211,153,0.15);color:#34d399;padding:2px 8px;border-radius:4px;font-weight:600">MEMBER</span>` : `<span style="font-size:10px;color:#4a5568">Guest</span>`}</td>
+      <td style="color:#4a5568;font-size:12px">${date}</td>
+    </tr>`;
+  }).join("");
+  return `<table>
+    <thead><tr>
+      <th>Type</th><th>Name</th><th>Phone</th><th>Location</th>
+      <th>Building</th><th>Category</th><th>Status</th><th>Member</th><th>Date</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
 // ── Firebase listeners ────────────────────────────────────────
 function startApp() {
 
-  // Sell interests — also drives the live badge
-  const qSell = query(collection(db, "sell-interests"), orderBy("createdAt", "desc"));
-  onSnapshot(qSell, snap => {
-    allSell = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Buy-Form ← new universal form collection
+  const qBuy = query(collection(db, "Buy-Form"), orderBy("createdAt", "desc"));
+  onSnapshot(qBuy, snap => {
+    allBuyForm = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     document.getElementById("status-dot").style.background  = "#34d399";
     document.getElementById("status-text").textContent      = "Live · Firebase";
     document.getElementById("live-badge").textContent       = "🔴 Live · Firebase";
@@ -97,38 +134,22 @@ function startApp() {
     document.getElementById("live-badge").style.borderColor = "rgba(52,211,153,0.2)";
     document.getElementById("live-badge").style.background  = "rgba(52,211,153,0.1)";
     renderKPIs();
-    renderSellTable(allSell);
+    renderBuyFormTable(allBuyForm);
   }, err => {
     document.getElementById("status-dot").style.background = "#ef4444";
     document.getElementById("status-text").textContent     = "Firebase error";
     document.getElementById("error-banner").style.display  = "block";
     document.getElementById("error-msg").textContent       = err.message;
-    console.error("sell-interests error:", err);
+    console.error("Buy-Form error:", err);
   });
 
-  // Buy interests
-  const qBuy = query(collection(db, "buy-interests"), orderBy("createdAt", "desc"));
-  onSnapshot(qBuy, snap => {
-    allBuy = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Sell-Form ← new universal form collection
+  const qSell = query(collection(db, "Sell-Form"), orderBy("createdAt", "desc"));
+  onSnapshot(qSell, snap => {
+    allSellForm = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderKPIs();
-    renderBuyTable(allBuy);
-  }, err => console.error("buy-interests error:", err));
-
-  // Rent interests
-  const qRent = query(collection(db, "rent-interests"), orderBy("createdAt", "desc"));
-  onSnapshot(qRent, snap => {
-    allRent = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderKPIs();
-    renderRentTable(allRent);
-  }, err => console.error("rent-interests error:", err));
-
-  // Offplan interests
-  const qOffplan = query(collection(db, "offplan-interests"), orderBy("createdAt", "desc"));
-  onSnapshot(qOffplan, snap => {
-    allOffplan = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderKPIs();
-    renderOffplanTable(allOffplan);
-  }, err => console.error("offplan-interests error:", err));
+    renderSellFormTable(allSellForm);
+  }, err => console.error("Sell-Form error:", err));
 
   // MainPropertyForm
   const qProps = query(collection(db, "MainPropertyForm"), orderBy("createdAt", "desc"));
@@ -165,12 +186,17 @@ function startApp() {
   });
 
   // Filters
-  
+  document.getElementById("buy-search")?.addEventListener("input",          () => renderBuyFormTable(allBuyForm));
+  document.getElementById("sell-search")?.addEventListener("input",         () => renderSellFormTable(allSellForm));
+  document.getElementById("props-search")?.addEventListener("input",        () => renderPropertiesTable(allProperties));
+  document.getElementById("members-search")?.addEventListener("input",      () => renderMembersTable(allMembers));
+  document.getElementById("regs-search")?.addEventListener("input",         () => renderRegistrationsTable(allRegistrations));
+  document.getElementById("lookup-search")?.addEventListener("input",       () => renderMemberLookup(getLookupData()));
+  document.getElementById("global-search-input")?.addEventListener("input", () => renderGlobalSearch(getSearchData()));
+
 } // end startApp
 
-// ── Boot ─────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
   initAuth(startApp);
 });
-// Note: add this import at top of app.js:
-// import { renderGlobalSearch } from "./global-search.js";

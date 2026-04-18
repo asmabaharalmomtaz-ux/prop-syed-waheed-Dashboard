@@ -46,11 +46,9 @@
       <nav>
         <button class="nav-btn active" data-view="dashboard">⊡ &nbsp; Dashboard</button>
 
-        <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#2d3748;font-weight:600">Interests</div>
-        <button class="nav-btn" data-view="sell">💰 &nbsp; Sell Interests</button>
-        <button class="nav-btn" data-view="buy">🛒 &nbsp; Buy Interests</button>
-        <button class="nav-btn" data-view="rent">🏠 &nbsp; Rent Interests</button>
-        <button class="nav-btn" data-view="offplan">🏗 &nbsp; Off-Plan Interests</button>
+        <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#2d3748;font-weight:600">Forms</div>
+        <button class="nav-btn" data-view="buy">🛒 &nbsp; Buy Form</button>
+        <button class="nav-btn" data-view="sell">💰 &nbsp; Sell Form</button>
 
         <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#2d3748;font-weight:600">People</div>
         <button class="nav-btn" data-view="members">🪪 &nbsp; Members</button>
@@ -127,43 +125,23 @@
 
         <!-- Interest Breakdown Cards -->
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px">
-          <div class="card" style="padding:20px;cursor:pointer" onclick="document.querySelector('[data-view=sell]').click()">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div>
-                <div style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Sell Interests</div>
-                <div style="font-size:28px;font-weight:700;color:#f59e0b" id="overview-sell">…</div>
-              </div>
-              <div style="font-size:28px">💰</div>
-            </div>
-            <div style="font-size:11px;color:#4a5568;margin-top:8px">Click to view →</div>
-          </div>
           <div class="card" style="padding:20px;cursor:pointer" onclick="document.querySelector('[data-view=buy]').click()">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div>
-                <div style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Buy Interests</div>
+                <div style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Buy Form</div>
                 <div style="font-size:28px;font-weight:700;color:#34d399" id="overview-buy">…</div>
               </div>
               <div style="font-size:28px">🛒</div>
             </div>
             <div style="font-size:11px;color:#4a5568;margin-top:8px">Click to view →</div>
           </div>
-          <div class="card" style="padding:20px;cursor:pointer" onclick="document.querySelector('[data-view=rent]').click()">
+          <div class="card" style="padding:20px;cursor:pointer" onclick="document.querySelector('[data-view=sell]').click()">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div>
-                <div style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Rent Interests</div>
-                <div style="font-size:28px;font-weight:700;color:#a78bfa" id="overview-rent">…</div>
+                <div style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Sell Form</div>
+                <div style="font-size:28px;font-weight:700;color:#f59e0b" id="overview-sell">…</div>
               </div>
-              <div style="font-size:28px">🏠</div>
-            </div>
-            <div style="font-size:11px;color:#4a5568;margin-top:8px">Click to view →</div>
-          </div>
-          <div class="card" style="padding:20px;cursor:pointer" onclick="document.querySelector('[data-view=offplan]').click()">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div>
-                <div style="font-size:12px;color:#4a5568;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Off-Plan Interests</div>
-                <div style="font-size:28px;font-weight:700;color:#fbbf24" id="overview-offplan">…</div>
-              </div>
-              <div style="font-size:28px">🏗</div>
+              <div style="font-size:28px">💰</div>
             </div>
             <div style="font-size:11px;color:#4a5568;margin-top:8px">Click to view →</div>
           </div>
@@ -206,9 +184,10 @@
       </div>
 
       <!-- Sell Interests -->
+      <!-- Buy Form -->
       <div id="view-sell" class="view">
         <div class="filters">
-          <input id="sell-search" class="filter-input" placeholder="🔍  Search name, phone, location…"/>
+          <input id="sell-search" class="filter-input" placeholder="🔍  Search name, phone, location, building..."/>
         </div>
         <div class="table-wrap" id="sell-container">
           <div style="padding:40px;text-align:center;color:#4a5568">Loading…</div>
@@ -216,10 +195,10 @@
         <div id="sell-count" style="margin-top:12px;font-size:12px;color:#4a5568"></div>
       </div>
 
-      <!-- Buy Interests -->
+      <!-- Sell Form -->
       <div id="view-buy" class="view">
         <div class="filters">
-          <input id="buy-search" class="filter-input" placeholder="🔍  Search name, phone, location…"/>
+          <input id="buy-search" class="filter-input" placeholder="🔍  Search name, phone, location, building..."/>
         </div>
         <div class="table-wrap" id="buy-container">
           <div style="padding:40px;text-align:center;color:#4a5568">Loading…</div>
@@ -227,27 +206,10 @@
         <div id="buy-count" style="margin-top:12px;font-size:12px;color:#4a5568"></div>
       </div>
 
-      <!-- Rent Interests -->
-      <div id="view-rent" class="view">
-        <div class="filters">
-          <input id="rent-search" class="filter-input" placeholder="🔍  Search name, phone, location…"/>
-        </div>
-        <div class="table-wrap" id="rent-container">
-          <div style="padding:40px;text-align:center;color:#4a5568">Loading…</div>
-        </div>
-        <div id="rent-count" style="margin-top:12px;font-size:12px;color:#4a5568"></div>
-      </div>
-
-      <!-- Off-Plan Interests -->
-      <div id="view-offplan" class="view">
-        <div class="filters">
-          <input id="offplan-search" class="filter-input" placeholder="🔍  Search name, phone, location…"/>
-        </div>
-        <div class="table-wrap" id="offplan-container">
-          <div style="padding:40px;text-align:center;color:#4a5568">Loading…</div>
-        </div>
-        <div id="offplan-count" style="margin-top:12px;font-size:12px;color:#4a5568"></div>
-      </div>
+      <!-- Rent Interests — kept for legacy data -->
+      <div id="view-rent" class="view" style="display:none"></div>
+      <!-- Off-Plan Interests — kept for legacy data -->
+      <div id="view-offplan" class="view" style="display:none"></div>
 
       <!-- Members -->
       <div id="view-members" class="view">
