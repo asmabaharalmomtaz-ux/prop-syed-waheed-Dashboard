@@ -60,7 +60,7 @@ export function renderBuyTable(docs) {
           width:20px;height:20px;border-radius:50%;
           background:rgb(219, 177, 37);color:#4f8ef7;
           font-size:11px;font-weight:700;transition:transform 0.2s;
-          transform:${isExpanded ? "rotate(90deg)" : "rotate(0deg)"}
+          transform:${expandedBuy.has(d.id) ? "rotate(90deg)" : "rotate(0deg)"}
         ">▶</span>
       </td>
       <div style="background:rgba(15,17,23,0.6);border-left:3px solid #34d399;padding:20px 28px">
