@@ -34,12 +34,14 @@ export function renderBuyTable(docs) {
     tr.onmouseover = () => tr.style.background = "rgba(255,255,255,0.03)";
     tr.onmouseout  = () => tr.style.background = "";
     tr.innerHTML = `
-      
+      <td style="width:32px;text-align:center">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:rgba(79,142,247,0.15);color:#4f8ef7;font-size:11px;font-weight:700;transition:transform 0.2s;transform:${isExp?"rotate(90deg)":"rotate(0deg)"}">▶</span>
+      </td>
       <td style="width:32px;text-align:center">
         <span style="
           display:inline-flex;align-items:center;justify-content:center;
           width:20px;height:20px;border-radius:50%;
-          background:rgba(79,142,247,0.15);color:#4f8ef7;
+          background:rgb(219, 177, 37);color:#4f8ef7;
           font-size:11px;font-weight:700;transition:transform 0.2s;
           transform:${isExpanded ? "rotate(90deg)" : "rotate(0deg)"}
         ">▶</span>
