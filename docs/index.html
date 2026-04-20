@@ -276,37 +276,6 @@
         <div id="props-count" style="margin-top:12px;font-size:12px;color:#4a5568"></div>
       </div>
 
-      <!-- Legacy leads view (kept for backward compat) -->
-      <div id="view-leads" class="view">
-        <div class="filters">
-          <input  id="search-input"  class="filter-input"  placeholder="🔍  Search name, email, location…"/>
-          <select id="filter-mode"   class="filter-select">
-            <option value="all">All Modes</option>
-            <option value="rent">Rent</option>
-            <option value="buy">Buy</option>
-            <option value="availability">Availability</option>
-          </select>
-          <select id="filter-status" class="filter-select">
-            <option value="all">All Status</option>
-            <option value="New">New</option>
-            <option value="Hot">Hot</option>
-            <option value="Warm">Warm</option>
-            <option value="Cold">Cold</option>
-          </select>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th></th><th>Name</th><th>Phone</th><th>Email</th><th>Mode</th><th>Properties</th><th>Max Budget</th><th>Date</th><th>Status</th></tr>
-            </thead>
-            <tbody id="leads-tbody">
-              <tr><td colspan="9" class="empty-cell">Loading from Firebase…</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div id="leads-count"></div>
-      </div>
-
     </div><!-- end #main -->
   </div><!-- end #app-screen -->
 
